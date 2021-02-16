@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SceneController : MonoBehaviour
 {
@@ -9,12 +10,12 @@ public class SceneController : MonoBehaviour
     public const float offsetX = 4f;
     public const float offsetY = 5f;
 
-    [SerializeField] private Card card;
+    [SerializeField] private Card mainCard;
     [SerializeField] private Sprite[] images;
 
     private void Start()
     {
-        Vector3 startPosition = card.transform.position;
+        Vector3 startPosition = mainCard.transform.position;
         int[] numbers = { 0, 0, 1, 1, 2, 2, 3, 3 };
         numbers = ShuffleArray(numbers);
 
@@ -25,11 +26,11 @@ public class SceneController : MonoBehaviour
                 Card newCard;
                 if (i == 0 && j == 0)
                 {
-                    newCard = card;
+                    newCard = mainCard;
                 }
                 else
                 {
-                    newCard = Instantiate(card) as Card;
+                    newCard = Instantiate(mainCard) as Card;
                 }
 
                 int index = j * cols + i;
@@ -54,6 +55,52 @@ public class SceneController : MonoBehaviour
             newArray[r] = temp;
         }
         return newArray;
+    }
+
+    private Card _firstRevealed;
+    private Card _secondRevealed;
+    private int _score = 0;
+    [SerializeField] private TextMesh scoreLabel;
+
+    public bool canReveal
+    {
+        get { return _secondRevealed == null; }
+    }
+
+    public void CardRevealed(Card card)
+    {
+        if (_firstRevealed == null)
+        {
+            _firstRevealed = card;
+        }
+        else
+        {
+            _secondRevealed = card;
+            StartCoroutine(ChechMatch());
+        }
+    }
+
+    private IEnumerator ChechMatch()
+    {
+        if (_firstRevealed.id == _secondRevealed.id)
+        {
+            _score++;
+            scoreLabel.text = "Score: " + _score;
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.5f);
+            _firstRevealed.Unreveal();
+            _secondRevealed.Unreveal();
+        }
+
+        _firstRevealed = null;
+        _secondRevealed = null;
+    }
+
+    public void Restart()
+    {
+        SceneManager.LoadScene("Scene");
     }
 
 }
